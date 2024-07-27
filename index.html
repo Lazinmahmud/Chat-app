@@ -54,7 +54,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // variables
+    // Variables
     var msgTxt = document.getElementById('msgTxt');
     var sender;
     if (sessionStorage.getItem('sender')) {
@@ -63,6 +63,18 @@
       sender = prompt('PLEASE ENTER YOUR NAME');
       sessionStorage.setItem('sender', sender);
     }
+
+    // Function to update typing status
+    function updateTypingStatus(isTyping) {
+      set(ref(db, `typing/${sender}`), {
+        isTyping: isTyping
+      });
+    }
+
+    // Detect when the user is typing
+    msgTxt.addEventListener('input', () => {
+      updateTypingStatus(msgTxt.value.length > 0);
+    });
 
     // TO SEND MESSAGES
     module.sendMsg = function sendMsg() {
@@ -74,12 +86,14 @@
         msg: msg,
         sender: sender,
         time: timestamp,
-        seen: false // Initially, the message is not seen
+        seen: false
       }).then(() => {
         // Update the message status to "Sent" once it's confirmed to be added
         update(ref(db, "messages/" + timestamp), {
           status: "Sent"
         });
+        // Clear typing status
+        updateTypingStatus(false);
       }).catch((error) => {
         console.error("Error sending message:", error);
       });
@@ -117,15 +131,21 @@
     // TO UPDATE MSG STATUS
     onChildChanged(ref(db, "messages"), (data) => {
       const messageData = data.val();
-      if (messageData.status === "Sent" && messageData.sender == sender) {
-        const statusElement = document.getElementById(`status-${data.key}`);
-        if (statusElement) {
+      const statusElement = document.getElementById(`status-${data.key}`);
+
+      if (statusElement) {
+        if (messageData.status === "Sent" && messageData.sender == sender) {
           statusElement.textContent = messageData.seen ? "Seen" : "Sent";
-        }
-      } else if (messageData.sender == sender && !messageData.status) {
-        const statusElement = document.getElementById(`status-${data.key}`);
-        if (statusElement) {
+          
+          // Add class to change the color if the message is seen
+          if (messageData.seen) {
+            statusElement.classList.add("seen-status");
+          } else {
+            statusElement.classList.remove("seen-status");
+          }
+        } else if (messageData.sender == sender && !messageData.status) {
           statusElement.textContent = "Sending...";
+          statusElement.classList.remove("seen-status");
         }
       }
     });
@@ -147,6 +167,28 @@
         seen: true
       });
     }
+
+    // Listen for typing status
+    const typingRef = ref(db, 'typing');
+    onChildAdded(typingRef, (data) => {
+      const typingData = data.val();
+      if (data.key !== sender && typingData.isTyping) {
+        document.querySelector('.userName p').textContent = 'Typing...';
+      }
+    });
+
+    onChildChanged(typingRef, (data) => {
+      const typingData = data.val();
+      if (data.key !== sender) {
+        document.querySelector('.userName p').textContent = typingData.isTyping ? 'Typing...' : 'Online';
+      }
+    });
+
+    onChildRemoved(typingRef, (data) => {
+      if (data.key !== sender) {
+        document.querySelector('.userName p').textContent = 'Online';
+      }
+    });
   </script>
 </body>
 </html>
