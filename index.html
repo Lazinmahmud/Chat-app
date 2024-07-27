@@ -12,8 +12,43 @@
 </head>
 
 <body>
-  <div class="header">
-    <i class='bx bx-arrow-back'></i>
+  
+  <div class="accoun-create-page">
+    
+  </div>
+  
+  <div class="main-ui">
+    <div class="main-page-header">
+      <div class="main-header-top">
+        <div class="header-menu">
+          <i class='bx bx-menu' ></i>
+        </div>
+        <h4>Udow Chat</h4>
+      </div>
+      <div class="main-header-bottom">
+        <p>Waiting for a network...</p>
+      </div>
+    </div>
+    <div class="search-input">
+      <i class='bx bx-search' ></i>
+      <input type="text" placeholder="Search">
+    </div>
+    <div class="all-user-chat-box">
+      <div class="user-chat">
+        <span class="user-profile"></span>
+        <div class="usrNam-and-msg-content">
+          <h4>User Name</h4>
+          <p>message content</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  <div class="chat-page">
+    <div class="header">
+    <i id="chatBack" class='bx bx-arrow-back'></i>
     <div class="profile"></div>
     <div class="userName">
       <h4>User Name</h4>
@@ -27,168 +62,203 @@
   </div>
   <div id="messages">
     <!-- Messages will be dynamically added here -->
+    
   </div>
 
   <div class="input-container" id="sendMsg">
     <input type="text" id="msgTxt" placeholder="Message">
     <button type="submit" id="msgBtn" onclick="module.sendMsg()"><i class='bx bxs-send'></i></button>
   </div>
+  </div>
 
   <script>
     module = {};
   </script>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, update, onChildChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, update, onChildChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC0z5oWyCeyWrMYJfyeeFJPfhi5UnexryQ",
-      authDomain: "chat-app-89ca7.firebaseapp.com",
-      databaseURL: "https://chat-app-89ca7-default-rtdb.firebaseio.com",
-      projectId: "chat-app-89ca7",
-      storageBucket: "chat-app-89ca7.appspot.com",
-      messagingSenderId: "569455246967",
-      appId: "1:569455246967:web:f231e740ff03e89bb35072"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0z5oWyCeyWrMYJfyeeFJPfhi5UnexryQ",
+    authDomain: "chat-app-89ca7.firebaseapp.com",
+    databaseURL: "https://chat-app-89ca7-default-rtdb.firebaseio.com",
+    projectId: "chat-app-89ca7",
+    storageBucket: "chat-app-89ca7.appspot.com",
+    messagingSenderId: "569455246967",
+    appId: "1:569455246967:web:f231e740ff03e89bb35072"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    // Variables
-    var msgTxt = document.getElementById('msgTxt');
-    var sender;
-    if (sessionStorage.getItem('sender')) {
-      sender = sessionStorage.getItem('sender');
+  // Function to initialize sender
+  function initializeSender() {
+    var storedSender = localStorage.getItem('sender');
+    if (storedSender) {
+      return storedSender;
     } else {
-      sender = prompt('PLEASE ENTER YOUR NAME');
-      sessionStorage.setItem('sender', sender);
+      let name = prompt('PLEASE ENTER YOUR NAME');
+      while (!name) {
+        name = prompt('Name cannot be empty. PLEASE ENTER YOUR NAME');
+      }
+      localStorage.setItem('sender', name);
+      return name;
+    }
+  }
+
+  // Initialize sender
+  var sender = initializeSender();
+
+  // Function to handle clearing the name from localStorage
+  function clearNameFromLocalStorage() {
+    localStorage.removeItem('sender');
+    // Reload the page to trigger prompt again
+    location.reload();
+  }
+
+  // Add event listener to the element with class 'header-menu'
+  document.querySelector('.header-menu').addEventListener('click', clearNameFromLocalStorage);
+
+  // Function to update typing status
+  function updateTypingStatus(isTyping) {
+    set(ref(db, `typing/${sender}`), {
+      isTyping: isTyping
+    });
+  }
+
+  // Detect when the user is typing
+  msgTxt.addEventListener('input', () => {
+    updateTypingStatus(msgTxt.value.length > 0);
+  });
+
+  // Function to scroll to the bottom of the messages container
+  function scrollToBottom() {
+    const messages = document.getElementById('messages');
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // TO SEND MESSAGES
+  module.sendMsg = function sendMsg() {
+    if (!sender) {
+      sender = initializeSender();
+      return; // Exit if sender is not defined
     }
 
-    // Function to update typing status
-    function updateTypingStatus(isTyping) {
-      set(ref(db, `typing/${sender}`), {
-        isTyping: isTyping
+    var msg = msgTxt.value;
+    var timestamp = new Date().getTime();
+
+    // Initially set status as "Sending..."
+    set(ref(db, "messages/" + timestamp), {
+      msg: msg,
+      sender: sender,
+      time: timestamp,
+      seen: false
+    }).then(() => {
+      // Update the message status to "Sent" once it's confirmed to be added
+      update(ref(db, "messages/" + timestamp), {
+        status: "Sent"
       });
-    }
-
-    // Detect when the user is typing
-    msgTxt.addEventListener('input', () => {
-      updateTypingStatus(msgTxt.value.length > 0);
+      // Clear typing status
+      updateTypingStatus(false);
+    }).catch((error) => {
+      console.error("Error sending message:", error);
     });
 
-    // TO SEND MESSAGES
-    module.sendMsg = function sendMsg() {
-      var msg = msgTxt.value;
-      var timestamp = new Date().getTime();
+    msgTxt.value = "";
+  }
 
-      // Initially set status as "Sending..."
-      set(ref(db, "messages/" + timestamp), {
-        msg: msg,
-        sender: sender,
-        time: timestamp,
-        seen: false
-      }).then(() => {
-        // Update the message status to "Sent" once it's confirmed to be added
-        update(ref(db, "messages/" + timestamp), {
-          status: "Sent"
-        });
-        // Clear typing status
-        updateTypingStatus(false);
-      }).catch((error) => {
-        console.error("Error sending message:", error);
-      });
+  // TO RECEIVE MSG
+onChildAdded(ref(db, "messages"), (data) => {
+  const messageData = data.val();
+  let statusText = messageData.status || "Sending...";
 
-      msgTxt.value = "";
-    }
+  if (messageData.seen) {
+    statusText = "Seen";
+  }
 
-    // TO RECEIVE MSG
-    onChildAdded(ref(db, "messages"), (data) => {
-      const messageData = data.val();
-      let statusText = messageData.status || "Sending...";
-
-      if (messageData.seen) {
-        statusText = "Seen";
-      }
-
-      if (messageData.sender == sender) {
-        messages.innerHTML += `<div style="justify-content:end" class="outer" id="${data.key}">
-          <div id="inner" class="me">${messageData.msg}
-          <button id="dltMsg" onclick="module.dltMsg('${data.key}')"><i class='bx bxs-trash'></i></button>
-          </div> <span class="msgStatus" id="status-${data.key}">${statusText}</span></div>`;
-      } else {
-        messages.innerHTML += `<div class="outer" id="${data.key}" onclick="module.markAsSeen('${data.key}')">
-          <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div></div>`;
-        
-        // Automatically mark the message as seen if it's not already seen
-        if (!messageData.seen) {
-          update(ref(db, "messages/" + data.key), {
-            seen: true
-          });
-        }
-      }
-    });
-
-    // TO UPDATE MSG STATUS
-    onChildChanged(ref(db, "messages"), (data) => {
-      const messageData = data.val();
-      const statusElement = document.getElementById(`status-${data.key}`);
-
-      if (statusElement) {
-        if (messageData.status === "Sent" && messageData.sender == sender) {
-          statusElement.textContent = messageData.seen ? "Seen" : "Sent";
-          
-          // Add class to change the color if the message is seen
-          if (messageData.seen) {
-            statusElement.classList.add("seen-status");
-          } else {
-            statusElement.classList.remove("seen-status");
-          }
-        } else if (messageData.sender == sender && !messageData.status) {
-          statusElement.textContent = "Sending...";
-          statusElement.classList.remove("seen-status");
-        }
-      }
-    });
-
-    // TO DELETE MSG
-    module.dltMsg = function dltMsg(key) {
-      remove(ref(db, "messages/" + key));
-    }
-
-    // WHEN MSG IS DELETED
-    onChildRemoved(ref(db, "messages"), (data) => {
-      var msgBox = document.getElementById(data.key);
-      messages.removeChild(msgBox);
-    });
-
-    // MARK MESSAGE AS SEEN
-    module.markAsSeen = function markAsSeen(key) {
-      update(ref(db, "messages/" + key), {
+  if (messageData.sender == sender) {
+    messages.innerHTML += `<div style="justify-content:end" class="outer" id="${data.key}">
+      <div id="inner" class="me">${messageData.msg}
+      <button id="dltMsg" onclick="module.dltMsg('${data.key}')"><i class='bx bxs-trash'></i></button>
+      </div> <span class="msgStatus ${messageData.seen ? "seen-status" : ""}" id="status-${data.key}">${statusText}</span></div><br>`;
+  } else {
+    messages.innerHTML += `<div class="outer" id="${data.key}" onclick="module.markAsSeen('${data.key}')">
+      <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div></div>`;
+    
+    // Automatically mark the message as seen if it's not already seen
+    if (!messageData.seen) {
+      update(ref(db, "messages/" + data.key), {
         seen: true
       });
     }
+  }
 
-    // Listen for typing status
-    const typingRef = ref(db, 'typing');
-    onChildAdded(typingRef, (data) => {
-      const typingData = data.val();
-      if (data.key !== sender && typingData.isTyping) {
-        document.querySelector('.userName p').textContent = 'Typing...';
-      }
-    });
+  // Scroll to the bottom after adding a new message
+  scrollToBottom();
+});
 
-    onChildChanged(typingRef, (data) => {
-      const typingData = data.val();
-      if (data.key !== sender) {
-        document.querySelector('.userName p').textContent = typingData.isTyping ? 'Typing...' : 'Online';
-      }
-    });
+// TO UPDATE MSG STATUS
+onChildChanged(ref(db, "messages"), (data) => {
+  const messageData = data.val();
+  const statusElement = document.getElementById(`status-${data.key}`);
 
-    onChildRemoved(typingRef, (data) => {
-      if (data.key !== sender) {
-        document.querySelector('.userName p').textContent = 'Online';
+  if (statusElement) {
+    if (messageData.sender == sender) {
+      statusElement.textContent = messageData.seen ? "Seen" : "Sent";
+
+      // Add class to change the color if the message is seen
+      if (messageData.seen) {
+        statusElement.classList.add("seen-status");
+      } else {
+        statusElement.classList.remove("seen-status");
       }
+    } else if (messageData.sender == sender && !messageData.status) {
+      statusElement.textContent = "Sending...";
+      statusElement.classList.remove("seen-status");
+    }
+  }
+});
+
+  // TO DELETE MSG
+  module.dltMsg = function dltMsg(key) {
+    remove(ref(db, "messages/" + key));
+  }
+
+  // WHEN MSG IS DELETED
+  onChildRemoved(ref(db, "messages"), (data) => {
+    var msgBox = document.getElementById(data.key);
+    messages.removeChild(msgBox);
+  });
+
+  // MARK MESSAGE AS SEEN
+  module.markAsSeen = function markAsSeen(key) {
+    update(ref(db, "messages/" + key), {
+      seen: true
     });
-  </script>
+  }
+
+  // Listen for typing status
+  const typingRef = ref(db, 'typing');
+  onChildAdded(typingRef, (data) => {
+    const typingData = data.val();
+    if (data.key !== sender && typingData.isTyping) {
+      document.querySelector('.userName p').textContent = 'Typing...';
+    }
+  });
+
+  onChildChanged(typingRef, (data) => {
+    const typingData = data.val();
+    if (data.key !== sender) {
+      document.querySelector('.userName p').textContent = typingData.isTyping ? 'Typing...' : 'Online';
+    }
+  });
+
+  onChildRemoved(typingRef, (data) => {
+    if (data.key !== sender) {
+      document.querySelector('.userName p').textContent = 'Online';
+    }
+  });
+</script>
+  <script src="script.js"></script>
 </body>
 </html>
