@@ -25,120 +25,128 @@
       <i class='bx bxs-info-circle'></i>
     </div>
   </div>
-    <div id="messages">
-      
-    </div>
+  <div id="messages">
+    <!-- Messages will be dynamically added here -->
+  </div>
 
-    <div class="input-container" id="sendMsg">
-        <input type="text" id="msgTxt" placeholder="Message">
-        <button type="submit" id="msgBtn" onclick="module.sendMsg()"><i class='bx bxs-send'></i></button>
-    </div>
+  <div class="input-container" id="sendMsg">
+    <input type="text" id="msgTxt" placeholder="Message">
+    <button type="submit" id="msgBtn" onclick="module.sendMsg()"><i class='bx bxs-send'></i></button>
+  </div>
 
-    <script>
-        module = {};
-    </script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-        import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, update } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+  <script>
+    module = {};
+  </script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, update, onChildChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0z5oWyCeyWrMYJfyeeFJPfhi5UnexryQ",
-            authDomain: "chat-app-89ca7.firebaseapp.com",
-            databaseURL: "https://chat-app-89ca7-default-rtdb.firebaseio.com",
-            projectId: "chat-app-89ca7",
-            storageBucket: "chat-app-89ca7.appspot.com",
-            messagingSenderId: "569455246967",
-            appId: "1:569455246967:web:f231e740ff03e89bb35072"
-        };
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0z5oWyCeyWrMYJfyeeFJPfhi5UnexryQ",
+      authDomain: "chat-app-89ca7.firebaseapp.com",
+      databaseURL: "https://chat-app-89ca7-default-rtdb.firebaseio.com",
+      projectId: "chat-app-89ca7",
+      storageBucket: "chat-app-89ca7.appspot.com",
+      messagingSenderId: "569455246967",
+      appId: "1:569455246967:web:f231e740ff03e89bb35072"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        // variables
-        var msgTxt = document.getElementById('msgTxt');
-        var sender;
-        if (sessionStorage.getItem('sender')) {
-            sender = sessionStorage.getItem('sender');
-        } else {
-            sender = prompt('PLEASE ENTER YOUR NAME');
-            sessionStorage.setItem('sender', sender);
-        }
-
-        // TO SEND MESSAGES
-        module.sendMsg = function sendMsg() {
-            var msg = msgTxt.value;
-            var timestamp = new Date().getTime();
-            set(ref(db, "messages/" + timestamp), {
-                msg: msg,
-                sender: sender,
-                time: timestamp,
-                seen: false // Initially, the message is not seen
-            });
-
-            msgTxt.value = "";
-        }
-
-        // TO RECEIVE MSG
-onChildAdded(ref(db, "messages"), (data) => {
-    const messageData = data.val();
-    const isSeen = messageData.seen;
-    const checkmarkClass = isSeen ? "blue-check" : "";
-
-    if (messageData.sender == sender) {
-        messages.innerHTML += `<div style="justify-content:end" class="outer" id="${data.key}">
-            <div id="inner" class="me">${messageData.msg}
-            <button id="dltMsg" onclick="module.dltMsg('${data.key}')"><i class='bx bxs-trash'></i></button>
-            </div> <i id="chekMark" class='bx bx-check-circle ${checkmarkClass}'></i></div>`;
+    // variables
+    var msgTxt = document.getElementById('msgTxt');
+    var sender;
+    if (sessionStorage.getItem('sender')) {
+      sender = sessionStorage.getItem('sender');
     } else {
+      sender = prompt('PLEASE ENTER YOUR NAME');
+      sessionStorage.setItem('sender', sender);
+    }
+
+    // TO SEND MESSAGES
+    module.sendMsg = function sendMsg() {
+      var msg = msgTxt.value;
+      var timestamp = new Date().getTime();
+
+      // Initially set status as "Sending..."
+      set(ref(db, "messages/" + timestamp), {
+        msg: msg,
+        sender: sender,
+        time: timestamp,
+        seen: false // Initially, the message is not seen
+      }).then(() => {
+        // Update the message status to "Sent" once it's confirmed to be added
+        update(ref(db, "messages/" + timestamp), {
+          status: "Sent"
+        });
+      }).catch((error) => {
+        console.error("Error sending message:", error);
+      });
+
+      msgTxt.value = "";
+    }
+
+    // TO RECEIVE MSG
+    onChildAdded(ref(db, "messages"), (data) => {
+      const messageData = data.val();
+      let statusText = messageData.status || "Sending...";
+
+      if (messageData.seen) {
+        statusText = "Seen";
+      }
+
+      if (messageData.sender == sender) {
+        messages.innerHTML += `<div style="justify-content:end" class="outer" id="${data.key}">
+          <div id="inner" class="me">${messageData.msg}
+          <button id="dltMsg" onclick="module.dltMsg('${data.key}')"><i class='bx bxs-trash'></i></button>
+          </div> <span class="msgStatus" id="status-${data.key}">${statusText}</span></div>`;
+      } else {
         messages.innerHTML += `<div class="outer" id="${data.key}" onclick="module.markAsSeen('${data.key}')">
-            <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div></div>`;
-    }
-});
+          <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div></div>`;
+        
+        // Automatically mark the message as seen if it's not already seen
+        if (!messageData.seen) {
+          update(ref(db, "messages/" + data.key), {
+            seen: true
+          });
+        }
+      }
+    });
 
-// TO DELETE MSG
-module.dltMsg = function dltMsg(key) {
-    const msgBox = document.getElementById(key);
-    if (msgBox) {
-        const innerDiv = msgBox.querySelector("#inner");
-        innerDiv.innerHTML = "You unsent this message";
-        innerDiv.classList.add("unsent-message");
-        const deleteButton = msgBox.querySelector("#dltMsg");
-        if (deleteButton) {
-            deleteButton.style.display = "none"; // Hide the delete button after unsending
+    // TO UPDATE MSG STATUS
+    onChildChanged(ref(db, "messages"), (data) => {
+      const messageData = data.val();
+      if (messageData.status === "Sent" && messageData.sender == sender) {
+        const statusElement = document.getElementById(`status-${data.key}`);
+        if (statusElement) {
+          statusElement.textContent = messageData.seen ? "Seen" : "Sent";
         }
-        const checkmark = msgBox.querySelector("#chekMark");
-        if (checkmark) {
-            checkmark.style.display = "none"; // Optionally hide the checkmark
+      } else if (messageData.sender == sender && !messageData.status) {
+        const statusElement = document.getElementById(`status-${data.key}`);
+        if (statusElement) {
+          statusElement.textContent = "Sending...";
         }
-    }
-    // Optionally, remove the message from the database
-    remove(ref(db, "messages/" + key));
-};
+      }
+    });
 
-// WHEN MSG IS DELETED
-onChildRemoved(ref(db, "messages"), (data) => {
-    var msgBox = document.getElementById(data.key);
-    if (msgBox) {
-        const innerDiv = msgBox.querySelector("#inner");
-        innerDiv.innerHTML = "You unsent this message";
-        innerDiv.classList.add("unsent-message");
-        const deleteButton = msgBox.querySelector("#dltMsg");
-        if (deleteButton) {
-            deleteButton.style.display = "none"; // Hide the delete button after unsending
-        }
-        const checkmark = msgBox.querySelector("#chekMark");
-        if (checkmark) {
-            checkmark.style.display = "none"; // Optionally hide the checkmark
-        }
+    // TO DELETE MSG
+    module.dltMsg = function dltMsg(key) {
+      remove(ref(db, "messages/" + key));
     }
-});
 
-        // MARK MESSAGE AS SEEN
-        module.markAsSeen = function markAsSeen(key) {
-            update(ref(db, "messages/" + key), {
-                seen: true
-            });
-        }
-    </script>
+    // WHEN MSG IS DELETED
+    onChildRemoved(ref(db, "messages"), (data) => {
+      var msgBox = document.getElementById(data.key);
+      messages.removeChild(msgBox);
+    });
+
+    // MARK MESSAGE AS SEEN
+    module.markAsSeen = function markAsSeen(key) {
+      update(ref(db, "messages/" + key), {
+        seen: true
+      });
+    }
+  </script>
 </body>
 </html>
