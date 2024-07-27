@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body>
+  <div class="header">
+    <i class='bx bx-arrow-back'></i>
+    <div class="profile"></div>
+    <div class="userName">
+      <h4>User Name</h4>
+      <p>Online</p>
+    </div>
+    <div class="featere">
+      <i class='bx bxs-phone' ></i>
+      <i class='bx bxs-video' ></i>
+      <i class='bx bxs-info-circle'></i>
+    </div>
+  </div>
+    <div id="messages">
+      
+    </div>
+
+    <div class="input-container" id="sendMsg">
+        <input type="text" id="msgTxt" placeholder="Message">
+        <button type="submit" id="msgBtn" onclick="module.sendMsg()"><i class='bx bxs-send'></i></button>
+    </div>
+
+    <script>
+        module = {};
+    </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+        import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, update } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0z5oWyCeyWrMYJfyeeFJPfhi5UnexryQ",
+            authDomain: "chat-app-89ca7.firebaseapp.com",
+            databaseURL: "https://chat-app-89ca7-default-rtdb.firebaseio.com",
+            projectId: "chat-app-89ca7",
+            storageBucket: "chat-app-89ca7.appspot.com",
+            messagingSenderId: "569455246967",
+            appId: "1:569455246967:web:f231e740ff03e89bb35072"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // variables
+        var msgTxt = document.getElementById('msgTxt');
+        var sender;
+        if (sessionStorage.getItem('sender')) {
+            sender = sessionStorage.getItem('sender');
+        } else {
+            sender = prompt('PLEASE ENTER YOUR NAME');
+            sessionStorage.setItem('sender', sender);
+        }
+
+        // TO SEND MESSAGES
+        module.sendMsg = function sendMsg() {
+            var msg = msgTxt.value;
+            var timestamp = new Date().getTime();
+            set(ref(db, "messages/" + timestamp), {
+                msg: msg,
+                sender: sender,
+                time: timestamp,
+                seen: false // Initially, the message is not seen
+            });
+
+            msgTxt.value = "";
+        }
+
+        // TO RECEIVE MSG
+onChildAdded(ref(db, "messages"), (data) => {
+    const messageData = data.val();
+    const isSeen = messageData.seen;
+    const checkmarkClass = isSeen ? "blue-check" : "";
+
+    if (messageData.sender == sender) {
+        messages.innerHTML += `<div style="justify-content:end" class="outer" id="${data.key}">
+            <div id="inner" class="me">${messageData.msg}
+            <button id="dltMsg" onclick="module.dltMsg('${data.key}')"><i class='bx bxs-trash'></i></button>
+            </div> <i id="chekMark" class='bx bx-check-circle ${checkmarkClass}'></i></div>`;
+    } else {
+        messages.innerHTML += `<div class="outer" id="${data.key}" onclick="module.markAsSeen('${data.key}')">
+            <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div></div>`;
+    }
+});
+
+        // TO DELETE MSG
+        module.dltMsg = function dltMsg(key) {
+            remove(ref(db, "messages/" + key));
+        }
+
+        // WHEN MSG IS DELETED
+        onChildRemoved(ref(db, "messages"), (data) => {
+            var msgBox = document.getElementById(data.key);
+            messages.removeChild(msgBox);
+        });
+
+        // MARK MESSAGE AS SEEN
+        module.markAsSeen = function markAsSeen(key) {
+            update(ref(db, "messages/" + key), {
+                seen: true
+            });
+        }
+    </script>
+</body>
+</html>
