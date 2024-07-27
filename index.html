@@ -8,6 +8,7 @@
   
   <link rel="stylesheet" href="style.css">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -94,16 +95,43 @@ onChildAdded(ref(db, "messages"), (data) => {
     }
 });
 
-        // TO DELETE MSG
-        module.dltMsg = function dltMsg(key) {
-            remove(ref(db, "messages/" + key));
+// TO DELETE MSG
+module.dltMsg = function dltMsg(key) {
+    const msgBox = document.getElementById(key);
+    if (msgBox) {
+        const innerDiv = msgBox.querySelector("#inner");
+        innerDiv.innerHTML = "You unsent this message";
+        innerDiv.classList.add("unsent-message");
+        const deleteButton = msgBox.querySelector("#dltMsg");
+        if (deleteButton) {
+            deleteButton.style.display = "none"; // Hide the delete button after unsending
         }
+        const checkmark = msgBox.querySelector("#chekMark");
+        if (checkmark) {
+            checkmark.style.display = "none"; // Optionally hide the checkmark
+        }
+    }
+    // Optionally, remove the message from the database
+    remove(ref(db, "messages/" + key));
+};
 
-        // WHEN MSG IS DELETED
-        onChildRemoved(ref(db, "messages"), (data) => {
-            var msgBox = document.getElementById(data.key);
-            messages.removeChild(msgBox);
-        });
+// WHEN MSG IS DELETED
+onChildRemoved(ref(db, "messages"), (data) => {
+    var msgBox = document.getElementById(data.key);
+    if (msgBox) {
+        const innerDiv = msgBox.querySelector("#inner");
+        innerDiv.innerHTML = "You unsent this message";
+        innerDiv.classList.add("unsent-message");
+        const deleteButton = msgBox.querySelector("#dltMsg");
+        if (deleteButton) {
+            deleteButton.style.display = "none"; // Hide the delete button after unsending
+        }
+        const checkmark = msgBox.querySelector("#chekMark");
+        if (checkmark) {
+            checkmark.style.display = "none"; // Optionally hide the checkmark
+        }
+    }
+});
 
         // MARK MESSAGE AS SEEN
         module.markAsSeen = function markAsSeen(key) {
