@@ -329,6 +329,16 @@
   width: 100%;
   height: 100vh;
 }
+.side-menu-opachity{
+  top: 0;
+  background: rgba(0,0,0,0.3);
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
 
 .new-chat-card.show {
   transform: scale(1);
@@ -395,32 +405,47 @@
 }
 .join-user-box{
   background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 300px;
-            text-align: center;
+  padding: 20px;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  text-align: center;
+  display: none;
+  position: absolute;
 }
-.join-user-box h2 {
-  font-size: 1.2rem;
-            margin: 0 0 20px;
-        }
+.join-user-box img{
+  width: 200px;
+}
+.join-user-box h4{
+  font-size: 1.5rem;
+  font-weight: 420;
+}
 
         .join-user-box input[type="text"] {
             width: calc(100% - 22px);
-            padding: 10px;
-            
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            
+            padding: 15px;
+            background: #efefef;
+            border: 0;
+            outline: 0;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        .join-user-box input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 15px;
+            background: #efefef;
+            border: 0;
+            outline: 0;
+            border-radius: 6px;
+            margin-top: 1rem;
         }
 
         .join-user-box button {
             background-color: #007bff;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 20px;
             border: none;
-            border-radius: 2rem;
+            border-radius: 6px;
             margin-top: 20px;
             width: 90%;
             font-weight: 420;
@@ -435,3 +460,51 @@
           color: #EB1639;
           font-size: 11px;
         }
+.side-menu{
+  padding: 1rem;
+  width: 80%;
+  height: 100vh;
+  background: #fff;
+  margin-left: -100%;
+  transition: 0.4s;
+}
+.menu-profile-box{
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+.menu-profile{
+  height: 50px;
+  width: 50px;
+  background: #efefef;
+  border-radius: 50%;
+}
+.nam-and-number{
+  margin-left: 12px;
+}
+.nam-and-number h4{
+  font-size: 1rem;
+}
+.nam-and-number p{
+  color: #808080;
+  font-size: 12px;
+}
+.lg-button{
+  display: flex;
+  width: 100%;
+  padding: 7px;
+  border: 0;
+  background: #efefef;
+  border-radius: 8px;
+  color: #EB1639;
+  margin-top: 10rem;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.lg-button i{
+  font-size: 1rem;
+}
+.lg-button:active{
+  opacity: 0.60;
+}
