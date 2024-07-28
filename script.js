@@ -35,3 +35,24 @@ document.getElementById('chatCard-close').addEventListener('click', function() {
                 bg.style.opacity = '1';
             }, 10);
         });
+        
+        
+        
+        
+        
+document.querySelector('.header-menu').addEventListener('click', function() {
+       document.querySelector('.side-menu-opachity').style.display = 'block'
+       document.querySelector('.side-menu-opachity').style.opacity = '1'
+       setTimeout(() => {
+       document.querySelector('.side-menu').style.marginLeft = '0'
+   }, 2);
+});
+
+document.querySelector('.side-menu-opachity').addEventListener('click', function() {
+       document.querySelector('.side-menu').style.marginLeft = '-100%'
+       
+       setTimeout(() => {
+       document.querySelector('.side-menu-opachity').style.display = 'none'
+       document.querySelector('.side-menu-opachity').style.opacity = '1'
+   }, 290);
+});
