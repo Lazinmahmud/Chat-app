@@ -57,14 +57,31 @@
       </div>
       </div>
     </div>
-    <div style="display: none;" class="alert-opachity-bg">
-     <div class="join-user-box">
-        <h2>JOIN UDOW</h2>
-        <input type="text" id="usernameInput" placeholder="Enter username" />
+    <div class="join-user-box">
+        <img src="icon.png">
+        <h4>Log in with your phone</h4>
+        <input type="text" id="usernameInput" placeholder="Username" />
+        <input type="password" placeholder="Password">
         <p class="alert-text" id="alertText">Name cannot be empty. Please enter your name.</p>
-        <button id="joinButton">Join</button>
+        <button id="joinButton">Log in</button>
     </div>
+    
+    <div class="side-menu-opachity">
+      <div class="side-menu">
+        <div class="menu-profile-box">
+          <div class="menu-profile"></div>
+          <div class="nam-and-number">
+            <h4>...</h4>
+            <p>XXX-XX-XXX</p>
+          </div>
+        </div>
+        <button class="lg-button">
+          <i class='bx bx-log-out'></i>
+          <p>Log Out</p>
+        </button>
+      </div>
     </div>
+    
   </div>
   
   
@@ -127,34 +144,45 @@
 
 function initializeSender() {
     const storedSender = localStorage.getItem('sender');
-    const joinUserBox = document.querySelector('.alert-opachity-bg');
+    const joinUserBox = document.querySelector('.join-user-box');
     const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.querySelector('input[type="password"]');
     const joinButton = document.getElementById('joinButton');
-    const alertText = document.getElementById('alertText'); // Assuming alertText is defined here
+    const alertText = document.getElementById('alertText');
+    const userNameDisplay = document.querySelector('.nam-and-number h4');
 
     if (storedSender) {
+        userNameDisplay.textContent = storedSender;
         return storedSender;
     } else {
-        joinUserBox.style.display = 'flex'; // Show the join form
+        joinUserBox.style.display = 'block';
 
-        // Add an event listener to the Join button
         joinButton.addEventListener('click', function() {
             const name = usernameInput.value.trim();
-            if (name) {
-                localStorage.setItem('sender', name);
-                joinUserBox.style.display = 'none'; // Hide the join form after storing the name
-                location.reload(); // Reload the page to continue with the stored name
-            } else {
-                alertText.style.display = 'block'; // Show the alert text
+            const password = passwordInput.value.trim();
 
-                // Set a timeout to hide the alert text after 5 seconds
+            if (name && password) {
+                localStorage.setItem('sender', name);
+                userNameDisplay.textContent = name;
+
+                // Store only username and password in the database with username as the key
+                set(ref(db, 'users/' + name), {
+                    password: password
+                }).then(() => {
+                    joinUserBox.style.display = 'none';
+                    location.reload();
+                }).catch((error) => {
+                    console.error("Error storing user info:", error);
+                });
+            } else {
+                alertText.style.display = 'block';
                 setTimeout(function() {
                     alertText.style.display = 'none';
                 }, 5000);
             }
         });
 
-        return null; // Return null or handle as needed until the name is set
+        return null;
     }
 }
 
@@ -171,8 +199,8 @@ let sender = initializeSender();
     location.reload();
   }
 
-  // Add event listener to the element with class 'header-menu'
-  document.querySelector('.header-menu').addEventListener('click', clearNameFromLocalStorage);
+  // Add event listener to the element with class 'lg-button'
+  document.querySelector('.lg-button').addEventListener('click', clearNameFromLocalStorage);
 
   // Function to update typing status
   function updateTypingStatus(isTyping) {
