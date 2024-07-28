@@ -42,6 +42,21 @@
         </div>
       </div>
     </div>
+    <div class="action-btn"><i class='bx bxs-message-alt-edit'></i></div>
+    <div class="opachity-bg">
+      <div class="new-chat-card">
+        <div class="chat-card-header">
+          <h4>New Chat</h4>
+        <i id="chatCard-close" class='bx bx-x'></i>
+        </div>
+        <div class="userName-box">
+        <input type="text" placeholder="UserName">
+        <input type="number" placeholder="Number (optional)">
+        <button type="button" class="startChatBtn">Start Chat</button>
+        <p class="udow-text">Connect with your friend's username from here on Udow Messenger and start chatting.</p>
+      </div>
+      </div>
+    </div>
   </div>
   
   
@@ -60,8 +75,13 @@
       <i class='bx bxs-info-circle'></i>
     </div>
   </div>
+  
+  
+  
   <div id="messages">
     <!-- Messages will be dynamically added here -->
+    
+   
     
   </div>
 
@@ -78,6 +98,8 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
   import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, update, onChildChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
 
+
+
   const firebaseConfig = {
     apiKey: "AIzaSyC0z5oWyCeyWrMYJfyeeFJPfhi5UnexryQ",
     authDomain: "chat-app-89ca7.firebaseapp.com",
@@ -90,6 +112,10 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+
+
+
+
 
   // Function to initialize sender
   function initializeSender() {
@@ -167,10 +193,22 @@
     msgTxt.value = "";
   }
 
-  // TO RECEIVE MSG
+// Function to format the timestamp with AM/PM
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+// TO RECEIVE MSG
 onChildAdded(ref(db, "messages"), (data) => {
   const messageData = data.val();
   let statusText = messageData.status || "Sending...";
+  const formattedTime = formatTime(messageData.time); // Format the time with AM/PM
 
   if (messageData.seen) {
     statusText = "Seen";
@@ -179,11 +217,20 @@ onChildAdded(ref(db, "messages"), (data) => {
   if (messageData.sender == sender) {
     messages.innerHTML += `<div style="justify-content:end" class="outer" id="${data.key}">
       <div id="inner" class="me">${messageData.msg}
+      <span class="msgTime">${formattedTime}</span> <!-- Display the time with AM/PM -->
       <button id="dltMsg" onclick="module.dltMsg('${data.key}')"><i class='bx bxs-trash'></i></button>
-      </div> <span class="msgStatus ${messageData.seen ? "seen-status" : ""}" id="status-${data.key}">${statusText}</span></div><br>`;
+      </div>
+      <div class="message-meta">
+        
+        <span class="msgStatus ${messageData.seen ? "seen-status" : ""}" id="status-${data.key}">${statusText}</span>
+      </div>
+    </div>`;
   } else {
     messages.innerHTML += `<div class="outer" id="${data.key}" onclick="module.markAsSeen('${data.key}')">
-      <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div></div>`;
+    
+      <div id="inner" class="notMe">${messageData.sender} : ${messageData.msg}</div>
+      <span id="msgTime">${formattedTime}</span> <!-- Display the time with AM/PM -->
+    </div>`;
     
     // Automatically mark the message as seen if it's not already seen
     if (!messageData.seen) {
@@ -258,6 +305,37 @@ onChildChanged(ref(db, "messages"), (data) => {
       document.querySelector('.userName p').textContent = 'Online';
     }
   });
+  
+  
+  
+  
+  
+let offlineTimeout;
+
+  // Function to update network status
+  function updateNetworkStatus() {
+    const statusElement = document.querySelector('.main-header-bottom p');
+    
+    if (navigator.onLine) {
+      clearTimeout(offlineTimeout);
+      statusElement.textContent = 'Online';
+      statusElement.classList.add('online-status');
+      statusElement.classList.remove('offline-status');
+    } else {
+      offlineTimeout = setTimeout(() => {
+        statusElement.textContent = 'Waiting for a network...';
+        statusElement.classList.add('offline-status');
+        statusElement.classList.remove('online-status');
+      }, 2000); // Delay of 2 seconds
+    }
+  }
+
+  // Check network status on page load
+  updateNetworkStatus();
+
+  // Listen for online and offline events
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
 </script>
   <script src="script.js"></script>
 </body>
