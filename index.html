@@ -57,6 +57,14 @@
       </div>
       </div>
     </div>
+    <div style="display: none;" class="alert-opachity-bg">
+     <div class="join-user-box">
+        <h2>JOIN UDOW</h2>
+        <input type="text" id="usernameInput" placeholder="Enter username" />
+        <p class="alert-text" id="alertText">Name cannot be empty. Please enter your name.</p>
+        <button id="joinButton">Join</button>
+    </div>
+    </div>
   </div>
   
   
@@ -117,23 +125,44 @@
 
 
 
-  // Function to initialize sender
-  function initializeSender() {
-    var storedSender = localStorage.getItem('sender');
-    if (storedSender) {
-      return storedSender;
-    } else {
-      let name = prompt('PLEASE ENTER YOUR NAME');
-      while (!name) {
-        name = prompt('Name cannot be empty. PLEASE ENTER YOUR NAME');
-      }
-      localStorage.setItem('sender', name);
-      return name;
-    }
-  }
+function initializeSender() {
+    const storedSender = localStorage.getItem('sender');
+    const joinUserBox = document.querySelector('.alert-opachity-bg');
+    const usernameInput = document.getElementById('usernameInput');
+    const joinButton = document.getElementById('joinButton');
+    const alertText = document.getElementById('alertText'); // Assuming alertText is defined here
 
-  // Initialize sender
-  var sender = initializeSender();
+    if (storedSender) {
+        return storedSender;
+    } else {
+        joinUserBox.style.display = 'flex'; // Show the join form
+
+        // Add an event listener to the Join button
+        joinButton.addEventListener('click', function() {
+            const name = usernameInput.value.trim();
+            if (name) {
+                localStorage.setItem('sender', name);
+                joinUserBox.style.display = 'none'; // Hide the join form after storing the name
+                location.reload(); // Reload the page to continue with the stored name
+            } else {
+                alertText.style.display = 'block'; // Show the alert text
+
+                // Set a timeout to hide the alert text after 5 seconds
+                setTimeout(function() {
+                    alertText.style.display = 'none';
+                }, 5000);
+            }
+        });
+
+        return null; // Return null or handle as needed until the name is set
+    }
+}
+
+// Initialize sender
+let sender = initializeSender();
+
+
+
 
   // Function to handle clearing the name from localStorage
   function clearNameFromLocalStorage() {
