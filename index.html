@@ -43,26 +43,36 @@
       </div>
     </div>
     <div class="action-btn"><i class='bx bxs-message-alt-edit'></i></div>
-    <div class="opachity-bg">
-      <div class="new-chat-card">
+    
+    
+    <div class="new-chat-card">
         <div class="chat-card-header">
           <h4>New Chat</h4>
         <i id="chatCard-close" class='bx bx-x'></i>
         </div>
-        <div class="userName-box">
-        <input type="text" placeholder="UserName">
-        <input type="number" placeholder="Number (optional)">
-        <button type="button" class="startChatBtn">Start Chat</button>
-        <p class="udow-text">Connect with your friend's username from here on Udow Messenger and start chatting.</p>
+        <div class="fast-name-box">
+          <i class='bx bx-user'></i>
+          <input type="text" placeholder="First name">
+        </div>
+        <div class="last-name-box">
+          <i class='bx bx-user'></i>
+          <input type="text" placeholder="Last name">
+        </div>
+        <div class="phone-number-box">
+    <i class='bx bx-phone'></i>
+    <input id="phoneInput" type="number" placeholder="Phone" maxlength="12">
+</div>
+<p id="requiredNumber" class="required-number" >Phone number is required</p>
+<button class="saveBtn" onclick="validatePhoneNumber()">Save</button>
       </div>
-      </div>
-    </div>
+      
+      
+      
     <div class="join-user-box">
     <img src="icon.png">
     <h4>Log in with your phone</h4>
     <input type="text" id="usernameInput" placeholder="Username" />
     <input type="password" id="passwordInput" placeholder="Password">
-    <p class="alert-text" id="alertText">Name cannot be empty. Please enter your name.</p>
     <button id="joinButton">Log in</button>
 </div>
     
