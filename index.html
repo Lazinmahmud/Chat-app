@@ -58,13 +58,13 @@
       </div>
     </div>
     <div class="join-user-box">
-        <img src="icon.png">
-        <h4>Log in with your phone</h4>
-        <input type="text" id="usernameInput" placeholder="Username" />
-        <input type="password" placeholder="Password">
-        <p class="alert-text" id="alertText">Name cannot be empty. Please enter your name.</p>
-        <button id="joinButton">Log in</button>
-    </div>
+    <img src="icon.png">
+    <h4>Log in with your phone</h4>
+    <input type="text" id="usernameInput" placeholder="Username" />
+    <input type="password" id="passwordInput" placeholder="Password">
+    <p class="alert-text" id="alertText">Name cannot be empty. Please enter your name.</p>
+    <button id="joinButton">Log in</button>
+</div>
     
     <div class="side-menu-opachity">
       <div class="side-menu">
@@ -157,30 +157,43 @@ function initializeSender() {
     } else {
         joinUserBox.style.display = 'block';
 
-        joinButton.addEventListener('click', function() {
-            const name = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
 
-            if (name && password) {
-                localStorage.setItem('sender', name);
-                userNameDisplay.textContent = name;
 
-                // Store only username and password in the database with username as the key
-                set(ref(db, 'users/' + name), {
-                    password: password
-                }).then(() => {
-                    joinUserBox.style.display = 'none';
-                    location.reload();
-                }).catch((error) => {
-                    console.error("Error storing user info:", error);
-                });
-            } else {
-                alertText.style.display = 'block';
-                setTimeout(function() {
-                    alertText.style.display = 'none';
-                }, 5000);
-            }
+document.getElementById('joinButton').addEventListener('click', function() {
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const name = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!name) {
+        usernameInput.placeholder = "Name cannot be empty.";
+        usernameInput.classList.add('alert');
+    } else {
+        usernameInput.classList.remove('alert');
+    }
+
+    if (!password) {
+        passwordInput.placeholder = "Password cannot be empty.";
+        passwordInput.classList.add('alert');
+    } else {
+        passwordInput.classList.remove('alert');
+    }
+
+    if (name && password) {
+        localStorage.setItem('sender', name);
+        userNameDisplay.textContent = name;
+
+        // Store only username and password in the database with username as the key
+        set(ref(db, 'users/' + name), {
+            password: password
+        }).then(() => {
+            joinUserBox.style.display = 'none';
+            location.reload();
+        }).catch((error) => {
+            console.error("Error storing user info:", error);
         });
+    }
+});
 
         return null;
     }
@@ -380,7 +393,7 @@ let offlineTimeout;
       statusElement.classList.remove('offline-status');
     } else {
       offlineTimeout = setTimeout(() => {
-        statusElement.textContent = 'Waiting for a network...';
+        statusElement.textContent = 'Connecting ...';
         statusElement.classList.add('offline-status');
         statusElement.classList.remove('online-status');
       }, 2000); // Delay of 2 seconds
